@@ -1,122 +1,187 @@
-import React from 'react';
 import './App.css';
-import FlipMove from "react-flip-move";
 
+import React, {useState} from 'react';
 
-class App extends React.Component {
-  constructor() {
-    super()
-    this.state = {
-      items: [  ],
-      currentIteam: {
-        text: "",
-        key: " "
-      }
-    }
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { 
+  faCircleCheck, faPen, faTrashCan 
+} from '@fortawesome/free-solid-svg-icons'
 
-    this.handleInput = this.handleInput.bind(this)
-    this.AddIteam = this.AddIteam.bind(this)
-    this.DeleteItems = this.DeleteItems.bind(this)
-    this.setUpdate = this.setUpdate.bind(this)
-  }
+function App() {
 
-  handleInput(e) {
-    this.setState({
-      currentIteam: {
-        text: e.target.value,
-        key: Date.now()
-      }
-    })
-  }
+  // Tasks (ToDo List) State
+  const [toDo, setToDo] = useState([]);
 
-  AddIteam(e) {
-    e.preventDefault();
-    const newiteam = this.state.currentIteam;
-    console.log(newiteam);
-    if (newiteam !== "") {
-      const newIteams = [...this.state.items, newiteam];
-      this.setState({
-        items: newIteams,
-        currentIteam: {
-          text: "",
-          key: "",
-        }
-      })
+  // Temp State
+  const [newTask, setNewTask] = useState('');
+  const [updateData, setUpdateData] = useState('');
+
+  // Add task 
+  ////////////////////////////////////////// 
+  const addTask = () => {
+    if(newTask) {
+      let num = toDo.length + 1; 
+      let newEntry = {id: num, title: newTask, status: false}
+      setToDo([...toDo, newEntry]);
+      setNewTask('');
     }
   }
 
-  DeleteItems(key) {
-    const fliterItems = this.state.items.filter(second => second.key !== key);
-    console.log(fliterItems);
-    this.setState({ items: fliterItems })
+  // Delete task 
+  ////////////////////////////////////////// 
+  const deleteTask = (id) => {
+    let newTasks = toDo.filter((task) => task.id !== id);
+    setToDo(newTasks);
   }
 
-  setUpdate(text, key) {
-    const items = this.state.items;
-    items.map(item => {
-      if (item.key === key) {
-        item.text = text;
+  // mark task as done or completed
+  ////////////////////////////////////////// 
+  const markDone = (id) => {
+    const newTasks = toDo.map((task) => {
+      if (task.id === id){
+        return ({ ...task, status: !task.status })
       }
+      return task;
     });
-
-    this.setState({
-      items: items
-    })
+    setToDo(newTasks);
   }
 
-  render() {
-    return (
+  // cancel update
+  ////////////////////////////////////////// 
+  const cancelUpdate = () => {
+    setUpdateData('');
+  }
 
-      <div className="first-todo">
-        <div className="second-input">
-          <header >
-            <h1 style={{ textAlign: "center" }}>
-              TODO LIST
-          </h1>
-            <div className="col-6" >
-              <div className="input-group">
-                <div className="input-group-prepend">
-                  <span className="input-group-text" id="basic-addon">
-                    <h2>✎</h2>
-                  </span>
-                </div>
-                <textarea className="form-control" id="exampleFormControlTextarea1" rows="5" cols="2" type="text" placeholder="Enter your text" value={this.state.currentIteam.text} onChange={this.handleInput}></textarea>
-              </div>
+  // Change task for update
+  ////////////////////////////////////////// 
+  const changeTask = (e) => {
+    let newEntry = {
+      id: updateData.id,
+      title: e.target.value,
+      status: updateData.status ? true : false
+    }
+    setUpdateData(newEntry);
+  }
+
+  // update task 
+  ////////////////////////////////////////// 
+  const updateTask = () => {
+    let filterRecords = [...toDo].filter( task=>task.id !== updateData.id);
+    let updatedObject = [...filterRecords, updateData];
+    setToDo(updatedObject);
+    setUpdateData('');
+  }
+
+  
+  return (
+    <div className="container App">
+      
+      <br /><br />
+
+      <h2>To Do List App (ReactJS)</h2>
+
+      <br /><br />
+      
+
+      {updateData && updateData ? (
+        <>
+          <div className="row">
+            <div className="col">
+              <input 
+                value={updateData && updateData.title} 
+                onChange={ (e) => changeTask(e) } 
+                className="form-control form-control-lg" 
+              />
             </div>
-            <button type="button" className="btn btn-primary" variant="contained" color="secondary" onClick={this.AddIteam} style={{ height: 50, margin: "3% 20%" }}>Note your text</button>
-          </header>
-          <Listiteams items={this.state.items} DeleteItems={this.DeleteItems} setUpdate={this.setUpdate} />
-        </div>
-      </div>
-    )
-  }
-}
+            <div className="col-auto">
+              <button 
+                className="btn btn-lg btn-success mr-20" 
+                onClick={updateTask}
+              >Update</button>
+              <button 
+                className="btn btn-lg btn-warning" 
+                onClick={cancelUpdate}
+              >Cancel</button>
+            </div>
+          </div>
+          <br />
+        </>
+      ) : (
+        <>
+          <div className="row">
+            <div className="col">
+              <input 
+                value={newTask} 
+                onChange={e => setNewTask(e.target.value)} 
+                className="form-control form-control-lg" 
+              />
+            </div>
+            <div className="col-auto">
+              <button 
+                className="btn btn-lg btn-success" 
+                onClick={addTask}
+              >Add Task</button>
+            </div>
+          </div>
+          <br />
+        </>
+      )}
 
 
+      {/* If there are no to dos in state, display a message   */}
+      {toDo && toDo.length ? '' : 'No tasks...'}
+      
+      {/* Show to dos   */}
+      {toDo && toDo
+        .sort((a, b) => a.id > b.id ? 1 : -1)
+        .map( (task, index) => {
+        return(
+          <React.Fragment key={task.id}>
+          
+            <div className="col taskBg">
+              
+              <div 
+                // if task status is true, add class to this div named as done
+                className={ task.status ? 'done' : '' }
+              >
+                {/* Show number of task */}
+                <span className="taskNumber">{index + 1}</span> 
+                <span className="taskText">{task.title}</span>
+              </div>
 
-function Listiteams(props) {
-  const items = props.items;
-  const listData = items.map(one => {
-    return <div key={one.key}>
-      <p style={{ boxShadow: "2px" }}>
-        <div className="container">
-          <input type="text"
-            className="form-control"
-            placeholder="here you can edit also"
-            id={one.key} value={one.text}
-            onChange={(e) => { props.setUpdate(e.target.value, one.key) }}
-            style={{ fontSize: "20px" }} />
-        </div>
+              <div className="iconsWrap">
+                <span 
+                  onClick={(e) => markDone(task.id)}
+                  title="Completed / Not Completed"
+                >
+                  <FontAwesomeIcon icon={faCircleCheck} />
+                </span>
+                
+                {task.status ? null : (
+                  <span 
+                    title="Edit"
+                    onClick={ () => setUpdateData({ id: task.id, title: task.title, satus: task.status ? true : false }) }
+                  >
+                    <FontAwesomeIcon icon={faPen} />
+                  </span>
+                )}
 
-        <button style={{ margin: "-3% 2% 1.5% 86%" }} className="input-group-prepend" type="button" className="btn btn-primary" fontSize="large" onClick={() => { props.DeleteItems(one.key) }} >DELETE</button>
-      </p>
+                <span 
+                  onClick={() => deleteTask(task.id)}
+                  title="Delete"
+                >
+                  <FontAwesomeIcon icon={faTrashCan} />
+                </span>
+              </div>
+
+            </div>
+                     
+        </React.Fragment>
+        );
+      })}
     </div>
-  })
-  return (<div>
-    <FlipMove duration={700} easing="ease-in-out">
-      {listData}
-    </FlipMove>
-  </div>)
+  );
 }
 
 export default App;
